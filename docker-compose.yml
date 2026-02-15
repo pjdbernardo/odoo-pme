@@ -1,4 +1,4 @@
-## Define os serviços da aplicação (Odoo + PostgreSQL)
+# Define os serviços da aplicação (Odoo + PostgreSQL)
 services:
 
   # Serviço do PostgreSQL - banco de dados
