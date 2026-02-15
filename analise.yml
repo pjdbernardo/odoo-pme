@@ -1,0 +1,98 @@
+# Define a versão do Docker Compose (versão estável recomendada)
+version: '3.8'
+
+# Define os serviços da aplicação (Odoo + PostgreSQL)
+services:
+  
+  # Serviço do PostgreSQL - banco de dados
+  db:
+    # Usa imagem oficial PostgreSQL versão 15 (estável para Odoo 17/18)
+    image: postgres:15
+    
+    # Nome único do container para fácil identificação
+    container_name: odoo_db
+    
+    # Reinicia automaticamente se falhar (boa prática para produção/development)
+    restart: unless-stopped
+    
+    # Carrega variáveis de ambiente do arquivo .env (segurança - senhas fora do compose)
+    env_file:
+      - .env
+    
+    # Mapeia porta 5432 do container para 5433 do host (evita conflito com Postgres local)
+    ports:
+      - "5433:5432"
+    
+    # Volume persistente para dados do banco (sobrevive recriação do container)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+      # Monta config do Odoo para o Postgres ler (master password)
+      - ./config:/etc/odoo
+    
+    # Limita recursos para não sobrecarregar máquina desktop
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          
+    # Aguarda Odoo iniciar antes de iniciar (não necessário aqui)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Serviço Odoo Web
+  odoo:
+    # Usa imagem oficial Odoo 18.0 (última LTS estável em 2026)
+    image: odoo:18.0
+    
+    # Nome único do container
+    container_name: odoo_web
+    
+    # Política de reinício automático
+    restart: unless-stopped
+    
+    # Dependência do banco (inicia após db estar pronto)
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    # Carrega variáveis de ambiente do .env
+    env_file:
+      - .env
+    
+    # Mapeia porta 8069 do container para 8069 do host
+    ports:
+      - "8069:8069"
+    
+    # Volumes para persistência de dados
+    volumes:
+      # Dados de filestore (anexos, imagens)
+      - odoo_filestore:/var/lib/odoo
+      
+      # Configuração Odoo
+      - ./config:/etc/odoo
+      
+      # Addons customizados (pasta vazia por enquanto)
+      - ./addons:/mnt/extra-addons
+      
+      # Workspace do desenvolvedor (Odoo source para debug)
+      - ./workspace:/mnt/workspace
+    
+    # Limita recursos da aplicação web
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+# Define volumes nomeados (persistentes e gerenciados pelo Docker)
+volumes:
+  # Volume para dados PostgreSQL
+  postgres_data:
+    driver: local
+  
+  # Volume para filestore Odoo
+  odoo_filestore:
+    driver: local

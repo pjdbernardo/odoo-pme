@@ -1,0 +1,27 @@
+ARQUITETURA***
+
+Utilizadores
+     ↓
+ERP (Odoo - container)
+     ↓
+Base de Dados (PostgreSQL - container)
+
+ESTRUTURA *****
+
+odoo-pme/
+│
+├── docker-compose.yml
+├── .env 
+│
+├── config/
+│   └── odoo.conf
+│
+├── addons/
+│
+└── data/
+    ├── postgres/
+    └── odoo/
+	
+
+.env 		[Definição do ambiente do container]
+odoo.conf 	[Configuração da aplicação Odoo]

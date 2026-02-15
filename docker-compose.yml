@@ -1,0 +1,68 @@
+# Define a versão do Docker Compose. Nota: A versão estável recomendada é 3.8
+version: "3.9"
+
+# Define os serviços da aplicação (Odoo + PostgreSQL)
+services:
+
+  # Serviço do PostgreSQL - banco de dados
+  db:
+    # Cria uma imagem oficial do postgres. Nota: Versão 16 é recomendável para odoo 19. Versão 15, recemendável para 17/18.
+    image: postgres:16  
+    # Nome único do container para fácil identificação                      
+    container_name: odoo_postgres
+    # Reinicia automaticamente se falhar. Nota prática para produção [restart: unless-stopped] .... para Produçao [restart: always ]
+    restart: unless-stopped
+  # Carrega variáveis de ambiente do arquivo .env (segurança - senhas fora do compose)
+    env_file:
+      - .env
+    
+    # ******************************************** A CONFIGURACAO REPASSADA PARA O FILE ".env" ***************************
+    # environment:
+    #  POSTGRES_DB: ${POSTGRES_DB}               # Nome da base de dados padrão 
+    #  POSTGRES_USER: ${POSTGRES_USER}           # Utilizador da BD
+    #  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}   # Password – MUDAR para forte!
+    # ********************************************************************************************************************
+    
+    # Mapeia porta 5432 do container para 5433 do host (evita conflito com Postgres local)
+    ports:
+      - "5433:5432"
+    # Volumes para persistência de dados. Sobrevive mesmo que o container seja parado ou removido
+    volumes:
+      # Banco de dadoos. Nota: odoo-db-data é o nome do volume
+      - odoo-db-data:/var/lib/postgresql/data    
+      # Monta config do Odoo para o Postgres ler (master password) [????????????] PERCEBER MELHOR O CONCEITO ******************************** ******************************************
+      - ./config:/etc/odoo
+    
+  # Serviço Odoo Web
+  odoo:
+    # Cria uma imagem do odoo 19. Nota: a última versão estável para 2026 é 18
+    image: odoo:19.0     
+    # Nome único do container para fácil identificação                         
+    container_name: odoo_app
+     # Reinicia automaticamente se falhar ...
+    restart: unless-stopped     
+    # Dependência do banco (inicia após db estar pronto)                     
+    depends_on:
+      - db
+    # Mapeia porta 8069 do container para 8069 do host
+    ports:
+      - "8069:8069"
+    # Volumes para persistência de dados. Sobrevive mesmo que o container seja parado ou removido
+    volumes:
+      # Dados da aplicação (módulos instalados, uploads, etc)
+      - odoo-web-data:/var/lib/odoo     
+      # Configuração Odoo. [Permitiria usar um arquivo de configuração customizado (odoo.conf) montado com o container]  [????????????] PERCEBER MELHOR O CONCEITO **********************    
+      - ./config/odoo.conf:/etc/odoo/odoo.conf
+      # Addons customizados (pasta vazia por enquanto)
+      - ./addons:/mnt/extra-addons
+    environment:
+      - HOST=db
+      - USER=${POSTGRES_USER}                   # Utilizador da BD (deve coincidir com POSTGRES_USER)  
+      - PASSWORD=${POSTGRES_PASSWORD}           # Senha da BD (deve conscidir com POSTGRESS_PASSWORD)
+
+# Define volumes nomeados persistentes e gerenciados pelo Docker
+volumes:    
+  # Base de dados postgres                                    
+  odoo-db-data:       
+  # Dados da aplicação (módulos instalados, uploads, etc)                          
+  odoo-web-data:                                
