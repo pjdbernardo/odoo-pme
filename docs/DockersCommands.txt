@@ -1,0 +1,84 @@
+sudo apt update																#verificar atualizações Linux disponíveis
+sudo apt upgrade -y															# instala as atualizações baseadas na lista acima
+[Alternativo] sudo apt update && sudo apt upgrade -y										# Executa ambos os comandos acima
+
+sudo apt install git -y														# Instala o git (necessário para comunicar com o github)
+git --version																# Verifica a instalação
+**************************************************************************************************************************************
+# Instala o Docker fazendo recurso ao repositório oficial do Docker (da Docker Inc.)
+**************************************************************************************************************************************
+# Instala dependências
+sudo apt install ca-certificates curl -y
+
+# Adiciona chave oficial Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+***************************************************************************************************************************************
+# Adicionar repositório Docker
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# Todas as linhas cima é apenas uma linha de comando!
+sudo apt update
+****************************************************************************************************************************************
+# InstalaR Docker + Compose
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+docker compose version   											# nota: é "compose" sem hífen na versão nova
+docker --version													# nota: Versão antiga
+****************************************************************************************************************************************
+# [ALTERNATIVA]Instalar Docker, Docker Compose (como plugin) e Git, usando os repositórios padrão do Ubuntu p/ puxar os pacotes 
+# NAO FUNCIONOU COM O UBUNTO 24.04 (TeStar em outro ambiente) | EM USO A OPÇÃO ANTERIOR 
+sudo apt install docker.io docker-compose-plugin git -y
+docker --version													# nota: Versão antiga
+
+****************************************************************************************************************************************
+# Clona o teu repositório do github
+1. Criar pasta local com o mesmo nome (do respositório).
+2. Aceder a pasta criam na linha de comando 
+3. Correr o comando: git init
+4. git clone https://github.com/pjdbernardo/nome_repositorio.git		#Baixa o repositório do github
+5. cd nome_repositorio													# Necessário porque os comandos Docker devem correr dessa pasta
+6. docker compose up -d												# Inicia containers. A I vez demora (faz download das imagens ~1-2GB).
+7. docker compose ps   												# Mostr aos containers running. Devem ser 2 (para esse projecto)
+8. docker ps   														# 
+*****************************************************************************************************************************************
+
+# Acesso ao Odoo via browser. No primeiro acesso vem o assistente de criação da BD. 
+http://localhost:8069												# No primeiro acesso vem assistente p/ criação da base de dados 
+
+git pull origin main												# Pusha alteraçõe feito no github para o host local
+git push origin main												# Envia oara o github as alteraçõe feito no host localdocker 
+
+******************************************************************************************************************************************
+git status
+git status --ignored
+
+******************************************************************************************************************************************
+docker compose logs -f web											# Ver logs
+
+docker compose down													# Parar Dockers
+
+docker volume ls													# Lista volumes do projecto
+
+docker volume rm VOLUME_NAME										# Revover cada volume docker visto acima
+
+docker images														# ver imagens em uso no projecto
+
+docker rmi odoo:19.0												# Remover imagem odoo
+docker rmi postgres:15												# Remover imagem postgres
+
+docker compose down && docker compose up -d --pull always			# Atualizar Odoo: Tem de editar image: odoo:xx para nova versão 
+
+sudo apt remove docker-compose -y
+sudo apt purge docker-compose -y   # remove também ficheiros de configuração
+sudo apt autoremove -y              # remove dependências desnecessárias
+
+
+
+
+
+
+
+
